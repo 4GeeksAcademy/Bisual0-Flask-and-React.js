@@ -1,10 +1,11 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import rigoImageUrl from "../assets/img/rigo-baby.jpg";
 import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
 
 export const Home = () => {
 
 	const { store, dispatch } = useGlobalReducer()
+	const [error, setError] = useState("")
 
 	const loadMessage = async () => {
 		try {
@@ -15,15 +16,11 @@ export const Home = () => {
 			const response = await fetch(backendUrl + "/api/hello")
 			const data = await response.json()
 
-			if (response.ok) dispatch({ type: "set_hello", payload: data.message })
+			if (!response.ok) throw new Error(data.msg || data.message || "El backend respondió con un error.")
 
-			return data
-
+			dispatch({ type: "set_hello", payload: data.message })
 		} catch (error) {
-			if (error.message) throw new Error(
-				`Could not fetch the message from the backend.
-				Please check if the backend is running and the backend port is public.`
-			);
+			setError(error.message || "No se pudo conectar con el backend.")
 		}
 
 	}
@@ -38,8 +35,10 @@ export const Home = () => {
 			<p className="lead">
 				<img src={rigoImageUrl} className="img-fluid rounded-circle mb-3" alt="Rigo Baby" />
 			</p>
-			<div className="alert alert-info">
-				{store.message ? (
+			<div className={`alert ${error ? "alert-danger" : "alert-info"}`}>
+				{error ? (
+					<span>{error}</span>
+				) : store.message ? (
 					<span>{store.message}</span>
 				) : (
 					<span className="text-danger">
